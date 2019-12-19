@@ -343,7 +343,7 @@ Callbacks are triggers during the training. Calling callbacks can make intermedi
 For the training process, it's up to the user to choose callbacks to make a callback list. Here it's an exemple:
 ```python
   from ulangel.utils.callbacks import TrainEvalCallback, CudaCallback, Recorder, RNNTrainer
-  cbs = [CudaCallback(), TrainEvalCallback(), Recorder(), RNNTrainer(α=2., β=1.), ParamScheduler('lr', sched)]
+  cbs = [CudaCallback(), TrainEvalCallback(), Recorder(), RNNTrainer(alpha=2., beta=1.), ParamScheduler('lr', sched)]
 ```
 
 
@@ -362,7 +362,7 @@ We can add AvgStatsCallback into the callback list, so that we can know the neur
 ```python
   from ulangel.utils.stats import AvgStatsCallback, accuracy, accuracy_flat
   # for a language model
-  cbs_languagemodel = [CudaCallback(), TrainEvalCallback(), AvgStatsCallback([accuracy_flat]), Recorder(), RNNTrainer(α=2., β=1.), ParamScheduler('lr', sched)]
+  cbs_languagemodel = [CudaCallback(), TrainEvalCallback(), AvgStatsCallback([accuracy_flat]), Recorder(), RNNTrainer(alpha=2., beta=1.), ParamScheduler('lr', sched)]
 
   # for a classifier
   cbs_classifier = [CudaCallback(), TrainEvalCallback(), AvgStatsCallback([accuracy]), Recorder(), ParamScheduler('lr', sched_clas)]

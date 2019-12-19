@@ -168,9 +168,9 @@ class RNNTrainer(Callback):
     Providing regularization AR, TAR
     """
 
-    def __init__(self, α, β):
-        self.α = α
-        self.β = β
+    def __init__(self, alpha, beta):
+        self.alpha = alpha
+        self.beta = beta
 
     def after_pred(self):
         # Save the extra outputs for later and only returns the true output.
@@ -180,12 +180,12 @@ class RNNTrainer(Callback):
 
     def after_loss(self):
         # AR and TAR
-        if self.α != 0.0:
-            self.run.loss += self.α * self.out[-1].float().pow(2).mean()
-        if self.β != 0.0:
+        if self.alpha != 0.0:
+            self.run.loss += self.alpha * self.out[-1].float().pow(2).mean()
+        if self.beta != 0.0:
             h = self.raw_out[-1]
             if len(h) > 1:
-                self.run.loss += self.β * (h[:, 1:] - h[:, :-1]).float().pow(2).mean()
+                self.run.loss += self.beta * (h[:, 1:] - h[:, :-1]).float().pow(2).mean()
 
 
 class ParamScheduler(Callback):
