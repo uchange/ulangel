@@ -17,6 +17,10 @@ There are three parts in this library:
 * `ulangel.rnn`: Create recurrent neuron network structures, such as connection dropouts, activation dropouts, LSTM for language model, encoder, etc.
 * `ulangel.utils`: Some tools for training, such as callbacks, optimizers, evaluations functions, etc.
 
+There are two kinds of inputs that this library is able to deal with:
+* `Simple text mode`: This input mode means that the input consists of only integers of the text, for exemple: [16, 8, 9, 261, ...]
+* `Text plus mode`: This input mode means that the input consists of not only integers of the text, but also other features for the classification problem, for exemple: [[16, 8, 9, 261, ...], True, 2, 2019, ...]. The list [16, 8, 9, 261, ...] is integers of the text as in simple text mode. `True` can be a boolean to tell if this text contains a contry name, `7` can be the number of appearence of the contry name, `2019` can be the published year of this text. You can also add as many features as you want. All features after the integer list can be no matter you want, as long as they are useful for your classification problem.
+
 ### ulangel.data
 There are three types of data objects in our training and validation systems. The default input data are numpy.ndarray objects.
 * Dataset: Devide(or/and shuffle) input data into batches. Each dataset item is a tuple of x and its corresponding y.

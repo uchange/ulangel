@@ -42,7 +42,7 @@ class Learner:
     def one_batch(self, i, xb, yb):
         try:
             self.iter = i
-            self.xb = xb.clone().detach().to(torch.int64)
+            self.xb = xb
             self.yb = yb
 
             # I added to debug from our data

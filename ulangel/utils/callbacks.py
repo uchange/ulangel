@@ -102,6 +102,19 @@ class CudaCallback(Callback):
         self.run.yb = self.yb.cuda()
 
 
+class CudaTextPlusCallback(Callback):
+    """Putting model and only the variable y on cuda.
+       Because with x in text plus mode, it's impossible to put a list of lists
+       on cuda.
+    """
+
+    def begin_fit(self):
+        self.model.cuda()
+
+    def begin_batch(self):
+        self.run.yb = self.yb.cuda()
+
+
 class Recorder(Callback):
     """Saving learning rate and loss values suring the training steps, so that
     we can plot them.
