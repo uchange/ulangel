@@ -13,7 +13,7 @@ This is a LSTM based neuron network. To classify the text, we train at first a l
 
 ## Usage
 There are three parts in this library:
-* `ulangel.data`: Preparation of the text classification data, such as creating dataset, creating databunch, padding all texts to have the same length in the same batch, etc.
+* `ulangel.data`: Preparation of the text classification data, including the text preparation (such as replacing emoji by words, replacing the repeated words by the word and its number of repeat, etc.) and the data preparation (such as creating dataset, creating databunch, padding all texts to have the same length in the same batch, etc.).
 * `ulangel.rnn`: Create recurrent neuron network structures, such as connection dropouts, activation dropouts, LSTM for language model, encoder, etc.
 * `ulangel.utils`: Some tools for training, such as callbacks, optimizers, evaluations functions, etc.
 
@@ -104,6 +104,8 @@ Databunch packs your training dataloader and validation dataloader together into
   language_model_data = DataBunch(trn_lm_dl, val_lm_dl)
 ```
 
+#### ulangel.data.text_processor
+It contains methods to clean the text.
 
 ### ulangel.rnn
 In this part, there are two main blocks to build a neuron network: dropouts and some special neuron network structures for our transfer learning.
