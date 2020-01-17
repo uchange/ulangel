@@ -447,6 +447,10 @@ If you want to, you can also write your own stepper, your own stateupdater, to b
   torch.save(language_model_learner.model.state_dict(), 'your_model_path.pkl')
 ```
 
+`ulangel.utils.learner.freeze_all` is a method that sets `requires_grad` of all parameters of the neural network as `Fasle`
+`ulangel.utils.learner.unfreeze_all` is a method that sets `requires_grad` of all parameters of the neural network as `True`
+`ulangel.utils.learner.freeze_upto` freezes first n layers of the neural network with `requires_grad` as `False` and `requires_grad` of the rest of layers as 'True'. It's useful when you want to train just the last few layers of a neuron network.
+
 ## Software Requirements
 Python 3.6
 torch 1.3.1

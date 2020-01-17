@@ -133,3 +133,26 @@ class Learner:
         for cb in sorted(self.cbs, key=lambda x: x._order):
             res = cb(cb_name) and res
         return res
+
+
+def freeze_all(model_all_layers):
+    for layer in model_all_layers:
+        for operation in layer:
+            for param in operation.parameters():
+                param.requires_grad = False
+
+
+def unfreeze_all(model_all_layers):
+    for layer in model_all_layers:
+        for operation in layer:
+            for param in operation.parameters():
+                param.requires_grad = True
+
+
+def freeze_upto(clas_model_layer_groups, nb_layer):
+    freeze_all(clas_model_layer_groups)
+    unfreeze_layers = clas_model_layer_groups[nb_layer:]
+    for layer in unfreeze_layers:
+        for operation in layer:
+            for param in operation.parameters():
+                param.requires_grad = True
