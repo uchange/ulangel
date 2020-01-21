@@ -47,7 +47,7 @@ def rm_useless_spaces(x):
 
 
 def replace_all_caps(x):
-    "Replace tokens in ALL CAPS by their lower version and add `TK_UP` before."
+    "Replace tokens in ALL CAPS by their lower version and add `TK_UP` ahead."
     res = []
     for t in x:
         if t.isupper() and len(t) > 1:
@@ -59,7 +59,7 @@ def replace_all_caps(x):
 
 
 def deal_caps(x):
-    "Replace all Capitalized tokens in by their lower version and add `TK_MAJ` before."
+    "Replace all Capitalized tokens in by their lower version and add `TK_MAJ` ahead."
     res = []
     for t in x:
         if t == '':
@@ -88,7 +88,7 @@ def replace_wrep(x):
     return re_wrep.sub(_replace_wrep, x)
 
 
-def get_texts(txts, tokenizer):
+def text_proc(txts, tokenizer):
     # remove charaters that we don't want
     texts = fixup(txts)
     # replace repeted word
