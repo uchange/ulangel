@@ -3,7 +3,7 @@
 ## Background
 Ulangel is a python library for NLP text classification. The idea comes from the article of Jeremy Howard et al. "Universal Language Model Fine-tuning for Text Classification" https://arxiv.org/pdf/1801.06146.pdf. The original codes are from the fastai library (https://github.com/fastai/course-v3). We use its NLP part as a source of reference and modify some codes to adapt to our use case. The name `ulangel` comes from `u`niversal `lang`uage mod`el`. It also means the fruit of the research department of company U (a french parisian startup), so called `l'ange de U` (the angel of U). U aimes to describe the ecosystem established by corporates as well as startups by our product `Motherbase`. In Motherbase, we have a large quantity of texts concerning company descriptions, communications where we apply this library `ulangel` to do the Natural Language Processing.
 
-This is a LSTM based neuron network. To classify the text, we train at first a language model and then fine-tune it into a classifier. In this library you will find all structures needed to pack data, to construct your lstm with dropouts, and some evaluation fuctions, optimizers to train your neuron network.
+This is a LSTM based neuron network. To classify the text, we train at first a language model and then fine-tune it into a classifier. In this library you will find all structures needed to process texts, to pack data, to construct your lstm with dropouts, and some evaluation fuctions, optimizers to train your neuron network.
 
 ## Install
 
@@ -13,22 +13,41 @@ This is a LSTM based neuron network. To classify the text, we train at first a l
 
 ## Usage
 There are three parts in this library:
-* `ulangel.data`: Preparation of the text classification data, including the text preparation (such as replacing emoji by words, replacing the repeated words by the word and its number of repeat, etc.) and the data preparation (such as creating dataset, creating databunch, padding all texts to have the same length in the same batch, etc.).
+* `ulangel.data`: Preparation of the text classification data, including the text preparation (such as text cleaning) and the data preparation (such as creating dataset, creating databunch, padding all texts to have the same length in the same batch, etc.).
 * `ulangel.rnn`: Create recurrent neuron network structures, such as connection dropouts, activation dropouts, LSTM for language model, encoder, etc.
 * `ulangel.utils`: Some tools for training, such as callbacks, optimizers, evaluations functions, etc.
 
 There are two kinds of inputs that this library is able to deal with:
 * `Simple text mode`: This input mode means that the input consists of only integers of the text, for exemple: [16, 8, 9, 261, ...]
-* `Text plus mode`: This input mode means that the input consists of not only integers of the text, but also other features for the classification problem, for exemple: [[16, 8, 9, 261, ...], True, 2, 2019, ...]. The list [16, 8, 9, 261, ...] is integers of the text as in simple text mode. `True` can be a boolean to tell if this text contains a contry name, `7` can be the number of appearence of the contry name, `2019` can be the published year of this text. You can also add as many features as you want. All features after the integer list can be no matter you want, as long as they are useful for your classification problem.
+* `Text plus mode`: This input mode means that the input consists of not only integers of the text, but also other features for the classification problem, for exemple: [[16, 8, 9, 261, ...], True, 2, 2019, ...]. The list [16, 8, 9, 261, ...] is integers of the text as in the `simple text mode`. `True` can be a boolean to tell if this text contains a country name, `7` can be the number of appearence of the country name, `2019` can be the published year of this text. You can also add as many features as you want. All features after the integer list can be no matter what you want, as long as they are useful for your classification problem.
 
 ### ulangel.data
+This part is for the data preparation. There are two main groups of functionalities: `ulangel.data.text_processor` for the text cleaning, and `ulangel.data.data_packer` for the data gathering.
+
+#### ulangel.data.text_processor
+In this part, there are methods to clean the text, including:
+1. Replace HTML special characters and emoji
+2. Replace word repetitions and add `xxwrep` ahead: word word word -> xxwrep 3 word
+3. Replace character repetitions and add `xxrep` ahead: cccc -> xxrep 4 c
+4. Add spaces around /,@,#,:
+5. Remove multiple spaces and keep just one
+6. Replace tokens with all letters in capitals by their lower case and add `xxup` ahead: GOOD JOB -> xxup good xxup job
+7. Replace tokens with the first letter in capital by their lower caser and add `xxmaj` ahead: We -> xxmaj we
+
+The method `ulangel.data.text_processor.text_proc` calls all methods above to clean the text, tokenize it, and add `xbos` at the beginning and `xfld` at the end of the text.
+
+Here is a notebook to show standard text processing steps, including text cleaning and text numeralization:
+
+
+#### ulangel.data.data_packer
 There are three types of data objects in our training and validation systems. The default input data are numpy.ndarray objects.
 * Dataset: Devide(or/and shuffle) input data into batches. Each dataset item is a tuple of x and its corresponding y.
 * Dataloader: Here we use the pytorch dataloader, to get dataset item in the way defined by the sampler.
 * Databunch: Gathering the training and validation dataloader as one data object and will be given to the learner to train the neuron network.
 
-#### Dataset
-For a language model, the input is a bptt-length text and the output is also a text as long as the input with just one word shifted. For a text [w0, w1, w2, w3, w4, ...] (wi is the corresponding integer of a word, a dictionary of your own text corpus creates this correspondance.) if bptt = 4, the input i0 is [w0, w1, w2, w3], then the output o0 will be [w1, w2, w3, w4]. The input and the output are generated from the same text, with the help of the class LanguageModelDataset.
+
+##### Dataset
+* `ulangel.data.data_packer.LanguageModelDataset`: For a language model, the input is a bptt-length text and the output is also a text as long as the input with just one word shifted. For a text [w0, w1, w2, w3, w4, ...] (wi is the corresponding integer of a word, a dictionary of your own text corpus creates this correspondance.) if bptt = 4, the input i0 is [w0, w1, w2, w3], then the output o0 will be [w1, w2, w3, w4]. The input and the output are generated from the same text, with the help of the class LanguageModelDataset.
 ```python
   import numpy as np
   from ulangel.data.data_packer import LanguageModelDataset
@@ -40,7 +59,7 @@ For a language model, the input is a bptt-length text and the output is also a t
   tensor([5.0000e+00, 2.0000e+00, 1.0000e+01, 4.0000e+00]))
 ```
 
-For a text classifier, its dataset is a little bit different. The input is still the same, but the output is an integer representing the corresponding class label. In this case, we use TextClassificationDataset which inherits the pytorch dataset `torch.utils.data.Dataset`.
+* `ulangel.data.data_packer.TextClassificationDataset`: For a text classifier, its dataset is a little bit different. The input is still the same, but the output is an integer representing the corresponding class label. In this case, we use TextClassificationDataset which inherits the pytorch dataset `torch.utils.data.Dataset`.
 ```python
   import numpy as np
   from ulangel.data.data_packer import TextClassificationDataset
@@ -53,7 +72,7 @@ For a text classifier, its dataset is a little bit different. The input is still
               4]), 2)
 ```
 
-#### Dataloader
+##### Dataloader
 In this library, we use the pytorch dataloader, but with our own sampler. For the language model, batches are generated by the concatenation of all texts so they all have the same length. We can use directly the dataloader to pack data.
 ```python
   from torch.utils.data import DataLoader
@@ -73,7 +92,7 @@ For the Classification data, we use the dataloader in this way:
 ```
 How to create samplers and collat_fn will be explained below.
 
-##### Sampler
+###### Sampler
 Sampler is an index generator. It returns a list of indexes, which corresponding item is sorted by the attribute key. In this library, TrainingSampler and ValidationSampler inherit the pytorch sampler `torch.utils.data.Sampler`.
 
 * `ulangel.data.data_packer.TrainingSampler`: TrainingSampler is a sampler for the training data. It sorts the data in the way defined by the given key, the longest at the first, the shortest at the end, random in the middle.
@@ -90,22 +109,19 @@ In this exemple, the data source is the x of the training dataset (texts), the k
 ```
 In this exemple, the data source is the x of the validation dataset (texts), the key is the length of each text.
 
-##### Collate Function
-Collate function can be used to manipulate your input data. In this library, our collate function: pad_collate is to pad the text with padding index pad_idx to have the same length in the same batch. This pad_collate function is inbuild, we just need to import, so that we can use it in the dataloader.
+###### Collate Function
+* `ulangel.data.data_packer.pad_collate`: Collate function can be used to manipulate your input data. In this library, our collate function: `pad_collate` is to pad the text with padding index pad_idx to have the same length in the same batch. This pad_collate function is inbuild, we just need to import, so that we can use it in the dataloader.
 ```python
   from ulangel.data.data_packer import pad_collate
 ```
 
 
-#### Databunch
-Databunch packs your training dataloader and validation dataloader together into a databunch object, so that your can give it to your learner (which will be explained later in README)
+##### Databunch
+* `ulangel.data.data_packer.DataBunch`: Databunch packs your training dataloader and validation dataloader together into a databunch object, so that your can give it to your learner (which will be explained later in README)
 ```python
   from ulangel.data.data_packer import DataBunch
   language_model_data = DataBunch(trn_lm_dl, val_lm_dl)
 ```
-
-#### ulangel.data.text_processor
-It contains methods to clean the text.
 
 ### ulangel.rnn
 In this part, there are two main blocks to build a neuron network: dropouts and some special neuron network structures for our transfer learning.
@@ -417,8 +433,11 @@ If you want to, you can also write your own stepper, your own stateupdater, to b
 ```
 
 
-#### Learner
-`ulangel.utils.learner.Learner` is a class that takes the RNN model, data for training, the loss function, the optimizer, the learning rate and callbacks that you need. The method `Learner.fit(epochs=number of epochs that you want to train)` executes all processes in order to train the model. Here is an exemple to build the langage model learner:
+#### ulangel.utils.learner
+This part includes the class `Learner` and some methods to freeze or unfreeze layers in order to a part of or the whole neural network.
+
+##### Learner
+* The class `ulangel.utils.learner.Learner`: It is a class that takes the RNN model, data for training, the loss function, the optimizer, the learning rate and callbacks that you need. The method `Learner.fit(epochs=number of epochs that you want to train)` executes all processes in order to train the model. Here is an exemple to build the langage model learner:
 ```python
   from ulangel.utils.learner import Learner
   language_model_learner = Learner(
@@ -449,9 +468,11 @@ If you want to, you can also write your own stepper, your own stateupdater, to b
   torch.save(language_model_learner.model.state_dict(), 'your_model_path.pkl')
 ```
 
-`ulangel.utils.learner.freeze_all` is a method that sets `requires_grad` of all parameters of the neural network as `Fasle`
-`ulangel.utils.learner.unfreeze_all` is a method that sets `requires_grad` of all parameters of the neural network as `True`
-`ulangel.utils.learner.freeze_upto` freezes first n layers of the neural network with `requires_grad` as `False` and `requires_grad` of the rest of layers as 'True'. It's useful when you want to train just the last few layers of a neuron network.
+##### Methods to freeze of unfreeze layers
+* `ulangel.utils.learner.freeze_all` is a method that sets `requires_grad` of all parameters of the neural network as `Fasle`.
+* `ulangel.utils.learner.unfreeze_all` is a method that sets `requires_grad` of all parameters of the neural network as `True`.
+* `ulangel.utils.learner.freeze_upto` freezes first n layers of the neural network with `requires_grad` as `False` and `requires_grad` of the rest of layers as 'True'. It's useful when you want to train just the last few layers of a neuron network.
+Here is the notebook to show how to use these methods:
 
 ## Software Requirements
 Python 3.6
