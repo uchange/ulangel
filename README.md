@@ -36,7 +36,7 @@ In this part, there are methods to clean the text, including:
 
 The method `ulangel.data.text_processor.text_proc` calls all methods above to clean the text, tokenize it, and add `xbos` at the beginning and `xfld` at the end of the text.
 
-Here is a notebook to show standard text processing steps, including text cleaning and text numeralization:
+Here is a notebook to show standard text processing steps, including text cleaning and text numeralization: (./doc/word_embedding_text_processor.ipynb)
 
 
 #### ulangel.data.data_packer
@@ -472,7 +472,7 @@ This part includes the class `Learner` and some methods to freeze or unfreeze la
 * `ulangel.utils.learner.freeze_all` is a method that sets `requires_grad` of all parameters of the neural network as `Fasle`.
 * `ulangel.utils.learner.unfreeze_all` is a method that sets `requires_grad` of all parameters of the neural network as `True`.
 * `ulangel.utils.learner.freeze_upto` freezes first n layers of the neural network with `requires_grad` as `False` and `requires_grad` of the rest of layers as 'True'. It's useful when you want to train just the last few layers of a neuron network.
-Here is the notebook to show how to use these methods:
+Here is the notebook to show how to use these methods: (./doc/freeze_to.ipynb)
 
 ## Software Requirements
 Python 3.6
