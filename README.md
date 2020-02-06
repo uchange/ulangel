@@ -13,13 +13,13 @@ This is a LSTM based neuron network. To classify the text, we train at first a l
 
 ## Usage
 The whole system is composed of two parts: language model and the text classifier.
-The language model is trained to predict the next word based on the input text. Its structure is shown below: [Language model strucutre](doc/language_model_diagram.jpg)
+The language model is trained to predict the next word based on the input text. Its structure is shown below: ![Language model strucutre](doc/language_model_diagram.jpg)
 It is supposed to treat only texts, because other features won't help to predict the next word.
 
 The classifier is adapted from the language model: it keeps all layers except the decoder then adds a pooling layer and a full connected linear neural network in order to classify.
 Different from the language model input, there are two kinds of inputs that this library is able to deal with for the text classification:
-* `Only text mode`: This input mode means that the input consists of only integers of the text, for exemple: [16, 8, 9, 261, ...]. The classifier structure is shown in the figure below: [Classifier only text mode](doc/classifier_only_text.jpg)
-* `Text plus mode`: This input mode means that the input consists of not only integers of the text, but also other features for the classification problem, for exemple: [[16, 8, 9, 261, ...], True, 2, 2019, ...]. The list [16, 8, 9, 261, ...] is integers of the text as in the `only text mode`. `True` can be a boolean to tell if this text contains a country name, `2` can be the number of presence of the country name, `2019` can be the published year of this text. You can also add as many features as you want. All features after the integer list can be no matter what you want, as long as they are useful for your classification problem. The classifier structure is shown in the figure below: [Classifier text plus mode](doc/classifier_text_plus.jpg)
+* `Only text mode`: This input mode means that the input consists of only integers of the text, for exemple: [16, 8, 9, 261, ...]. The classifier structure is shown in the figure below: ![Classifier only text mode](doc/classifier_only_text.jpg)
+* `Text plus mode`: This input mode means that the input consists of not only integers of the text, but also other features for the classification problem, for exemple: [[16, 8, 9, 261, ...], True, 2, 2019, ...]. The list [16, 8, 9, 261, ...] is integers of the text as in the `only text mode`. `True` can be a boolean to tell if this text contains a country name, `2` can be the number of presence of the country name, `2019` can be the published year of this text. You can also add as many features as you want. All features after the integer list can be no matter what you want, as long as they are useful for your classification problem. The classifier structure is shown in the figure below: ![Classifier text plus mode](doc/classifier_text_plus.jpg)
 
 
 There are three parts in this library:
