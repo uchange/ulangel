@@ -51,6 +51,7 @@ class AWD_LSTM(nn.Module):
         )
 
     def forward(self, input):
+        input = input.long()
         bs, sl = input.size()
         if bs != self.bs:
             self.bs = bs
@@ -138,7 +139,7 @@ class SequentialRNN(nn.Sequential):
                 c.reset()
 
 
-class SentenceEncoder(nn.Module):
+class OnlyTextSentenceEncoder(nn.Module):
     """The same as the language model encoder, but if the input texts are
     longer than the bptt, it cuts them into bptt in order to be calculated by
     the language model, and then concatenate the results to make still one text
@@ -164,6 +165,7 @@ class SentenceEncoder(nn.Module):
         return t
 
     def forward(self, input):
+        input = input.long()
         bs, sl = input.size()
         self.module.reset()
         raw_outputs = []
@@ -181,7 +183,7 @@ class SentenceEncoder(nn.Module):
         )
 
 
-class SentenceTextPlusEncoder(nn.Module):
+class TextPlusSentenceEncoder(nn.Module):
 
     def __init__(self, module, bptt, pad_idx=1):
         super().__init__()
@@ -223,7 +225,7 @@ class SentenceTextPlusEncoder(nn.Module):
         )
 
 
-class PoolingLinearClassifier(nn.Module):
+class OnlyTextPoolingLinearClassifier(nn.Module):
     """Create a linear classifier with pooling. Concatenating the last sequence
     of outputs, the max pooling of outputs, the average pooling of outputs. This
     concatenation is the input of the lineal neuro network classifier.
@@ -261,7 +263,7 @@ class PoolingLinearClassifier(nn.Module):
         return layers
 
 
-class PoolingLinearTextPlusClassifier(nn.Module):
+class TextPlusPoolingLinearClassifier(nn.Module):
     "Create a linear classifier with pooling."
 
     def __init__(self, layers1, drops1, layers2, drops2):

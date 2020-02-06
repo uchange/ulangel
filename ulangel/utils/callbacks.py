@@ -90,7 +90,7 @@ class TrainEvalCallback(Callback):
         self.run.in_train = False
 
 
-class CudaCallback(Callback):
+class OnlyTextCudaCallback(Callback):
     """Putting model and variables on cuda.
     """
 
@@ -102,7 +102,7 @@ class CudaCallback(Callback):
         self.run.yb = self.yb.cuda()
 
 
-class CudaTextPlusCallback(Callback):
+class TextPlusCudaCallback(Callback):
     """Putting model and only the variable y on cuda.
        Because with x in text plus mode, it's impossible to put a list of lists
        on cuda.

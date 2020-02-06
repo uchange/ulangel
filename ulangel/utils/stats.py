@@ -37,7 +37,7 @@ class AvgStats:
 
     def accumulate(self, run):
         "update statistics and count"
-        bn = run.xb.shape[0]
+        bn = run.yb.shape[0]
         self.tot_loss += run.loss * bn
         self.count += bn
         for i, m in enumerate(self.metrics):

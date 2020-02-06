@@ -16,10 +16,10 @@ The whole system is composed of two parts: language model and the text classifie
 The language model is trained to predict the next word based on the input text. Its structure is shown below: ![Language model strucutre](doc/language_model_diagram.jpg)
 It is supposed to treat only texts, because other features won't help to predict the next word.
 
-The classifier is adapted from the language model: it keeps all layers except the decoder then adds a pooling layer and a full connected linear neural network in order to classify.
+The classifier is adapted from the language model: it keeps all layers except the decoder and then adds a pooling layer and a full connected linear neural network in order to classify.
 Different from the language model input, there are two kinds of inputs that this library is able to deal with for the text classification:
-* `Only text mode`: This input mode means that the input consists of only integers of the text, for exemple: [16, 8, 9, 261, ...]. The classifier structure is shown in the figure below: ![Classifier only text mode](doc/classifier_only_text.jpg)
-* `Text plus mode`: This input mode means that the input consists of not only integers of the text, but also other features for the classification problem, for exemple: [[16, 8, 9, 261, ...], True, 2, 2019, ...]. The list [16, 8, 9, 261, ...] is integers of the text as in the `only text mode`. `True` can be a boolean to tell if this text contains a country name, `2` can be the number of presence of the country name, `2019` can be the published year of this text. You can also add as many features as you want. All features after the integer list can be no matter what you want, as long as they are useful for your classification problem. The classifier structure is shown in the figure below: ![Classifier text plus mode](doc/classifier_text_plus.jpg)
+* `Only text mode`: This input mode means that the input consists of only integers of the text, for exemple: [45, 30, ..., 183]. The classifier structure is shown in the figure below: ![Classifier only text mode](doc/classifier_only_text.jpg)
+* `Text plus mode`: This input mode means that the input consists of not only integers of the text, but also other features for the classification problem, for exemple: [[45, 30, ..., 183], True, 2, 2019, ...]. The list [16, 8, 9, 261, ...] is integers of the text as in the `only text mode`. `True` can be a boolean to tell if this text contains a country name, `2` can be the number of presence of the country name, `2019` can be the published year of this text. You can also add as many features as you want. All features after the integer list can be no matter what you want, as long as they are useful for your classification problem. The classifier structure is shown in the figure below: ![Classifier text plus mode](doc/classifier_text_plus.jpg)
 
 
 There are three parts in this library:
@@ -117,7 +117,8 @@ In this exemple, the data source is the x of the training dataset (texts), the k
 In this exemple, the data source is the x of the validation dataset (texts), the key is the length of each text.
 
 ###### Collate Function
-* `ulangel.data.data_packer.pad_collate_onlytext`: Collate function can be used to manipulate your input data. In this library, our collate function: `pad_collate_onlytext` is to pad the text with padding index pad_idx to have the same length in the same batch. This pad_collate_onlytext function is inbuild, we just need to import, so that we can use it in the dataloader.
+Collate function can be used to manipulate your input data. In this library, our collate function: `pad_collate` is to pad all texts with padding index pad_idx to have the same length for one whole batch. This pad_collate function is inbuild, we just need to import, so that we can use it in the dataloader. It exists for two different input modes.
+* `ulangel.data.data_packer.pad_collate_onlytext`:
 ```python
   from ulangel.data.data_packer import pad_collate_onlytext
 ```
@@ -334,7 +335,7 @@ For the classification data, there are two types of input data: `only text mode`
   )
 ```
 
-* `ulangel.rnn.nn_block.TextPlusPoolingLinearClassifier`: is the text plus version.
+* `ulangel.rnn.nn_block.TextPlusPoolingLinearClassifier`: is the text plus version. The difference from the only text mode is that text plus mode pooling linear classifier has another group of layers. This supplemental group of layers takes nonverbal features into account.
 ```python
   from ulangel.rnn.nn_block import TextPlusPoolingLinearClassifier
   pool_clas = TextPlusPoolingLinearClassifier(
@@ -363,7 +364,7 @@ For the classification data, there are two types of input data: `only text mode`
 )
 ```
 
-To build the complete classifier, we use the `ulangel.rnn.nn_block.SequentialRNN` to connect these two classes:
+To build the complete classifier, we use the `ulangel.rnn.nn_block.SequentialRNN` to connect these two classes, here is an exemple for the only text mode:
 ```python
   classifier = SequentialRNN(sent_enc, pool_clas)
   classifier
@@ -407,6 +408,7 @@ To build the complete classifier, we use the `ulangel.rnn.nn_block.SequentialRNN
     )
   )
 ```
+For the text plus mode it will be the same. Just need to be careful that sentence encoder and pooling linear classifier should be in the same mode (an OnlyTextSentenceEncoder should not be followed by a TextPlusPoolingLinearClassifier).
 
 ### ulangel.utils
 In this part, there are some tools for the training of the neuron network.

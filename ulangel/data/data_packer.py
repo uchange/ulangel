@@ -144,7 +144,7 @@ class TrainingSampler(Sampler):
         return iter(sorted_idx)
 
 
-def pad_collate(samples, pad_idx=1, pad_first=False):
+def pad_collate_onlytext(samples, pad_idx=1, pad_first=False):
     """For each batch, fill in all texts with the pad_idx, in order to make all
     lines have the same length as the longest text of this batch.
     A sample is a batch of dataset (a batch of tuples of x and y). s[0] is x,
