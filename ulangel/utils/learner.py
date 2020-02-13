@@ -149,9 +149,9 @@ def unfreeze_all(model_all_layers):
                 param.requires_grad = True
 
 
-def freeze_upto(clas_model_layer_groups, nb_layer):
-    freeze_all(clas_model_layer_groups)
-    unfreeze_layers = clas_model_layer_groups[nb_layer:]
+def freeze_upto(model_all_layers, nb_layer):
+    freeze_all(model_all_layers)
+    unfreeze_layers = model_all_layers[nb_layer:]
     for layer in unfreeze_layers:
         for operation in layer:
             for param in operation.parameters():
