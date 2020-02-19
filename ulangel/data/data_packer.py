@@ -176,6 +176,6 @@ def pad_collate_textplus(samples, pad_idx=1, pad_first=False):
         else:
             res[:len(x1)] = np.array(x1)
         xi.append(torch.LongTensor(res))
-        xi.append(x2)
+        xi.append(torch.FloatTensor(x2))
         x.append(xi)
     return x, torch.tensor([s[1] for s in samples])

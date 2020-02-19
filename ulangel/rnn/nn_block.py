@@ -203,9 +203,12 @@ class TextPlusSentenceEncoder(nn.Module):
         return t
 
     def forward(self, input):
-        ids_input, kw_ls = list(zip(*input))
-        ids_input = torch.stack(ids_input).long()
-        kw_ls = torch.Tensor(kw_ls).float()
+        if len(input) != 2:
+            ids_input, kw_ls = list(zip(*input))
+            ids_input = torch.stack(ids_input)
+            kw_ls = torch.stack(kw_ls)
+        else:
+            ids_input, kw_ls = input
         bs, sl = ids_input.size()
         self.module.reset()
         raw_outputs = []
@@ -213,7 +216,7 @@ class TextPlusSentenceEncoder(nn.Module):
         masks = []
         for i in range(0, sl, self.bptt):
             ids_input_i = ids_input[:, i: min(i+self.bptt, sl)]
-            r, o, m = self.module(ids_input_i.cuda())
+            r, o, m = self.module(ids_input_i)
             masks.append(self.pad_tensor(m, bs, 1))
             raw_outputs.append(r)
             outputs.append(o)
@@ -291,7 +294,6 @@ class TextPlusPoolingLinearClassifier(nn.Module):
             [output[torch.arange(0, output.size(0)), lengths-1], max_pool, avg_pool],
             1)  # Concat pooling.
         first_clas = self.layers1(x1)
-        kw_ls = kw_ls.cuda()
         x2 = torch.cat([first_clas, kw_ls], 1)
         x = self.layers2(x2)
         return x

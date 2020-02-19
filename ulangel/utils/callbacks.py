@@ -112,6 +112,10 @@ class TextPlusCudaCallback(Callback):
         self.model.cuda()
 
     def begin_batch(self):
+        ids_input, kw_ls = list(zip(*self.xb))
+        ids_input = torch.stack(ids_input).long()
+        kw_ls = torch.stack(kw_ls).float()
+        self.run.xb = [ids_input.cuda(), kw_ls.cuda()]
         self.run.yb = self.yb.cuda()
 
 
