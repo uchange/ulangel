@@ -1,5 +1,6 @@
 import re
 import emoji
+import html
 
 UNK = "xxunk"
 PAD = "xxpad"
