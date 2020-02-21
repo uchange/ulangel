@@ -3,7 +3,23 @@
 ## Background
 Ulangel is a python library for NLP text classification. The idea comes from the article of Jeremy Howard et al. "Universal Language Model Fine-tuning for Text Classification" https://arxiv.org/pdf/1801.06146.pdf. The original codes are from the fastai library (https://github.com/fastai/course-v3). We use its NLP part as a source of reference and modify some codes to adapt to our use case. The name `ulangel` comes from `u`niversal `lang`uage mod`el`. It also means the fruit of the research department of company U (a french parisian startup), so called `l'ange de U` (the angel of U). U aimes to describe the ecosystem established by corporates as well as startups by our product `Motherbase`. In Motherbase, we have a large quantity of texts concerning company descriptions, communications where we apply this library `ulangel` to do the Natural Language Processing.
 
-This is a LSTM based neuron network. To classify the text, we train at first a language model and then fine-tune it into a classifier. In this library you will find all structures needed to process texts, to pack data, to construct your lstm with dropouts, and some evaluation fuctions, optimizers to train your neuron network.
+This is a LSTM based neuron network. To classify the text, we train at first a language model and then fine-tune it into a classifier. That means the whole system is composed of two parts: language model and the text classifier.
+`The language model` is trained to predict the next word based on the input text. Its structure is shown below: ![Language model strucutre](doc/language_model_diagram.jpg)
+It is supposed to treat only texts, because other features won't help to predict the next word.
+
+`The classifier` is adapted from the language model: it keeps all layers except the decoder and then adds a pooling layer and a full connected linear neural network in order to classify.
+Different from the language model input, there are two kinds of inputs that this library is able to deal with for the text classification:
+* `Only text mode`: This input mode means that the input consists of only integers of the text, for exemple: [45, 30, ..., 183]. The classifier structure is shown in the figure below: ![Classifier only text mode](doc/classifier_only_text.jpg)
+* `Text plus mode`: This input mode means that the input consists of not only integers of the text, but also other features for the classification problem, for exemple: [[45, 30, ..., 183], True, 2, 2019, ...]. The list [16, 8, 9, 261, ...] is integers of the text as in the `only text mode`. `True` can be a boolean to tell if this text contains a country name, `2` can be the number of presence of the country name, `2019` can be the publication year of this text. You can also add as many features as you want. All features after the integer list can be no matter what you want, as long as they are useful for your classification problem. The classifier structure is shown in the figure below: ![Classifier text plus mode](doc/classifier_text_plus.jpg)
+
+
+In this library you will find all structures needed to process texts, to pack data, to construct your lstm with dropouts, and some evaluation fuctions, optimizers to train your neuron network.
+
+All classes and methodes are seperated in three different parts of this library:
+* `ulangel.data`: Preparation of the text classification data, including the text preparation (such as text cleaning) and the data formating (such as creating dataset, creating databunch, padding all texts to have the same length in the same batch, etc.).
+* `ulangel.rnn`: Create recurrent neuron network structures, such as connection dropouts, activation dropouts, LSTM for language model, encoder, etc.
+* `ulangel.utils`: Some tools for training, such as callbacks, optimizers, evaluations functions, etc.
+
 
 ## Install
 
@@ -12,21 +28,6 @@ This is a LSTM based neuron network. To classify the text, we train at first a l
   ```
 
 ## Usage
-The whole system is composed of two parts: language model and the text classifier.
-The language model is trained to predict the next word based on the input text. Its structure is shown below: ![Language model strucutre](doc/language_model_diagram.jpg)
-It is supposed to treat only texts, because other features won't help to predict the next word.
-
-The classifier is adapted from the language model: it keeps all layers except the decoder and then adds a pooling layer and a full connected linear neural network in order to classify.
-Different from the language model input, there are two kinds of inputs that this library is able to deal with for the text classification:
-* `Only text mode`: This input mode means that the input consists of only integers of the text, for exemple: [45, 30, ..., 183]. The classifier structure is shown in the figure below: ![Classifier only text mode](doc/classifier_only_text.jpg)
-* `Text plus mode`: This input mode means that the input consists of not only integers of the text, but also other features for the classification problem, for exemple: [[45, 30, ..., 183], True, 2, 2019, ...]. The list [16, 8, 9, 261, ...] is integers of the text as in the `only text mode`. `True` can be a boolean to tell if this text contains a country name, `2` can be the number of presence of the country name, `2019` can be the published year of this text. You can also add as many features as you want. All features after the integer list can be no matter what you want, as long as they are useful for your classification problem. The classifier structure is shown in the figure below: ![Classifier text plus mode](doc/classifier_text_plus.jpg)
-
-
-There are three parts in this library:
-* `ulangel.data`: Preparation of the text classification data, including the text preparation (such as text cleaning) and the data formating (such as creating dataset, creating databunch, padding all texts to have the same length in the same batch, etc.).
-* `ulangel.rnn`: Create recurrent neuron network structures, such as connection dropouts, activation dropouts, LSTM for language model, encoder, etc.
-* `ulangel.utils`: Some tools for training, such as callbacks, optimizers, evaluations functions, etc.
-
 
 ### ulangel.data
 This part is for the data preparation. There are two main groups of functionalities: `ulangel.data.text_processor` for the text cleaning, and `ulangel.data.data_packer` for the data gathering.
@@ -41,20 +42,18 @@ In this part, there are methods to clean the text, including:
 6. Replace tokens with all letters in capitals by their lower case and add `xxup` ahead: GOOD JOB -> xxup good xxup job
 7. Replace tokens with the first letter in capital by their lower caser and add `xxmaj` ahead: We -> xxmaj we
 
-The method `ulangel.data.text_processor.text_proc` calls all methods above to clean the text, tokenize it, and add `xbos` at the beginning and `xfld` at the end of the text.
-
-Here is a notebook to show standard text processing steps, including text cleaning and text numeralization: [text_processor](doc/word_embedding_text_processor.ipynb)
+The method `ulangel.data.text_processor.text_proc` calls all methods above to clean the text, tokenize it, and add `xbos` at the beginning and `xfld` at the end of the text. Here is a notebook to show standard text processing steps, including text cleaning and text numeralization: [text_processor](doc/word_embedding_text_processor.ipynb)
 
 
 #### ulangel.data.data_packer
 There are three types of data objects in our training and validation systems. The default input data are numpy.ndarray objects.
-* Dataset: Devide(or/and shuffle) input data into batches. Each dataset item is a tuple of x and its corresponding y.
+* Dataset: Divide(or/and shuffle) input data into batches. Each dataset item is a tuple of x and its corresponding y.
 * Dataloader: Here we use the pytorch dataloader, to get dataset item in the way defined by the sampler.
 * Databunch: Gathering the training and validation dataloader as one data object and will be given to the learner to train the neuron network.
 
 
 ##### Dataset
-* `ulangel.data.data_packer.LanguageModelDataset`: For a language model, the input is a bptt-length text and the output is also a text as long as the input with just one word shifted. For a text [w0, w1, w2, w3, w4, ...] (wi is the corresponding integer of a word, a dictionary of your own text corpus creates this correspondance.) if bptt = 4, the input i0 is [w0, w1, w2, w3], then the output o0 will be [w1, w2, w3, w4]. The input and the output are generated from the same text, with the help of the class LanguageModelDataset.
+* `ulangel.data.data_packer.LanguageModelDataset`: For a language model, the input is a bptt-length text and the output is also a text as long as the input with just one word shifted. For a text [w0, w1, w2, w3, w4, ...] (wi is the corresponding integer of a word, in the dictionary of your own text corpus.) If bptt = 4, the input i0 is [w0, w1, w2, w3], then the output o0 will be [w1, w2, w3, w4]. The input and the output are generated from the same text, with the help of the class LanguageModelDataset.
 ```python
   import numpy as np
   from ulangel.data.data_packer import LanguageModelDataset
@@ -80,7 +79,7 @@ There are three types of data objects in our training and validation systems. Th
 ```
 
 ##### Dataloader
-In this library, we use the pytorch dataloader, but with our own sampler. For the language model, batches are generated by the concatenation of all texts so they all have the same length. We can use directly the dataloader to pack data.
+In this library, we use the pytorch dataloader, but with our own sampler. For the language model, batches are generated by concatenating all texts so they all have the same length. We can use directly the dataloader to pack data.
 ```python
   from torch.utils.data import DataLoader
   trn_lm_dl = DataLoader(trn_lm_ds, batch_size=2)
@@ -91,11 +90,12 @@ In this library, we use the pytorch dataloader, but with our own sampler. For th
            [11.,  5.,  2., 10.]])]
 ```
 
-However, for the text classification, we can not concatenate texts together, because each text has its own class. It doesn't make sense to mix texts to form equilong texts in the batch. In order to train the neuron network in an efficient way and in the same time keeping the randomness, we have two different samplers for the training and the validation data. Additionally, for texts in each batch, they should have the same length, so we use a collate function to pad those short texts.
+However, for the text classification, we can not concatenate texts together, because each text has its own class. It doesn't make sense to mix texts to form equilong texts in the batch. In order to train the neuron network in an efficient way and at the same time to keep the randomness, we have two different samplers for the training and the validation data. Additionally, for texts in each batch, they should have the same length, so we use a collate function to pad those short texts.
 For the Classification data, we use the dataloader in this way:
 ```python
-  trn_clas_dl = DataLoader(trn_clas_ds, batch_size=2, sampler=trn_sampler, collate_fn=pad_collate)
-  val_clas_dl = DataLoader(val_clas_ds, batch_size=2, sampler=val_sampler, collate_fn=pad_collate)
+  from ulangel.data.data_packer import pad_collate_onlytext
+  trn_clas_dl = DataLoader(trn_clas_ds, batch_size=2, sampler=trn_sampler, collate_fn=pad_collate_onlytext)
+  val_clas_dl = DataLoader(val_clas_ds, batch_size=2, sampler=val_sampler, collate_fn=pad_collate_onlytext)
 ```
 How to create samplers and collat_fn will be explained below.
 
@@ -109,7 +109,7 @@ Sampler is an index generator. It returns a list of indexes, which corresponding
 ```
 In this exemple, the data source is the x of the training dataset (texts), the key is the length of each text.
 
-* `ulangel.data.data_packer.ValidationSampler`: It sorts the data in the way defined by the given key, in an increasing or a decreasing way. It is different from the TrainingSampler, there is no randomness, the validation texts will be sorted from the longest to the shortest.
+* `ulangel.data.data_packer.ValidationSampler`: It sorts the data in the way defined by the given key, in an ascending or a descending way. It is different from the TrainingSampler, there is no randomness, the validation texts will be sorted from the longest to the shortest.
 ```python
   from ulangel.data.data_packer import ValidationSampler
   val_sampler = ValidationSampler(val_clas_ds.x, key=lambda t: len(val_clas_ds.x[t]))
@@ -141,7 +141,7 @@ In this part, there are two main blocks to build a neuron network: dropouts and 
 #### ulangel.rnn.dropouts
 The pytorch dropout are dropouts to zero out some activations with probability p. In the article of Stephen Merity et al. "Regularizing and Optimizing LSTM Language Models" https://arxiv.org/pdf/1708.02182.pdf they propose to apply dropouts not only on activations but also on connections. Using pytorch dropouts is not enough. Therefore, we create three different dropout classes:
 
-* `ulangel.rnn.dropouts.ActivationDropout`: as its name, this is a dropout to zero out activations in the layer in the neuron network.
+* `ulangel.rnn.dropouts.ActivationDropout`: as its name, this is a dropout to zero out activations in the layer of the neuron network.
 * `ulangel.rnn.dropouts.ConnectionWeightDropout`: as its name, this is a dropout to zero out connections (weights) between layers.
 * `ulangel.rnn.dropouts.EmbeddingDropout`: this is a dropout class to zero out embedding activations.
 
@@ -150,7 +150,7 @@ These three dropout classes will be used in the AWD_LSTM to build the LSTM for t
 #### ulangel.rnn.nn_block
 In this part, we have some structures to build a language model and a text classifier.
 
-* `ulangel.rnn.nn_block.AWD_LSTM`: is the class to build the language model except the decoder layer. This is the commum part for the language model and the text classifier. It is a LSTM neuron network inheriting `torch.nn.Module` proposed by Stephen Merity et al. in the article "Regularizing and Optimizing LSTM Language Models" https://arxiv.org/pdf/1708.02182.pdf. Because we use the pretrained language model wikitext-103 from this article, to finetune our own language model on our corpus, we need to keep the same values for some hyperparameters as wikitext-103: embedding_size = 400, number_of_hidden_activation = 1150.
+* `ulangel.rnn.nn_block.AWD_LSTM`: is the class to build the language model except the decoder layer. This is the commom part for the language model and the text classifier. It is a LSTM neuron network inheriting `torch.nn.Module` proposed by Stephen Merity et al. in the article "Regularizing and Optimizing LSTM Language Models" https://arxiv.org/pdf/1708.02182.pdf. Because we use the pretrained language model wikitext-103 from this article, to finetune our own language model on our corpus, we need to keep the same values for some hyperparameters as wikitext-103: embedding_size = 400, number_of_hidden_activation = 1150.
 ```python
   from ulangel.rnn.nn_block import AWD_LSTM
   # define hyperparameters
@@ -171,7 +171,15 @@ In this part, we have some structures to build a language model and a text class
   encode_args = LmArg()
   # build the LSTM neuron network
   lstm_enc = AWD_LSTM(
-    vocab_sz=encode_args.nomber_of_tokens, emb_sz=encode_args.embedding_size, n_hid=encode_args.number_of_hidden_activation, n_layers=encode_args.number_of_layers, pad_token=encode_args.pad_token, hidden_p=encode_args.activation_dropout, input_p=encode_args.input_activation_dropout, embed_p=encode_args.embedding_activation_dropout, weight_p=encode_args.connection_hh_dropout)
+      vocab_sz=encode_args.nomber_of_tokens,
+      emb_sz=encode_args.embedding_size,
+      n_hid=encode_args.number_of_hidden_activation,
+      n_layers=encode_args.number_of_layers,
+      pad_token=encode_args.pad_token,
+      hidden_p=encode_args.activation_dropout,
+      input_p=encode_args.input_activation_dropout,
+      embed_p=encode_args.embedding_activation_dropout,
+      weight_p=encode_args.connection_hh_dropout)
   lstm_enc
   >>> AWD_LSTM(
     (emb): Embedding(10000, 400, padding_idx=1)
@@ -198,11 +206,15 @@ In this part, we have some structures to build a language model and a text class
   )
 ```
 
-* `ulangel.rnn.nn_block.LinearDecoder`: This is a decoder inheriting `torch.nn.Module`, the inverse of an encoder, to transfer the last hidden layer (embedding vector) into its corresponding integer representation of the work, so that we can find the word comprehensive for human.
+* `ulangel.rnn.nn_block.LinearDecoder`: This is a decoder inheriting `torch.nn.Module`, the inverse of an encoder, to transfer the last hidden layer (embedding vector) into its corresponding integer representation of the work, so that we can find comprehensive words for human.
 ```python
   from ulangel.rnn.nn_block import LinearDecoder
   decoder = LinearDecoder(
-      encode_args.number_of_tokens, encode_args.embedding_size, encode_args.decoder_activation_dropout, tie_encoder=lstm_enc.emb, bias=True
+      encode_args.number_of_tokens,
+      encode_args.embedding_size,
+      encode_args.decoder_activation_dropout,
+      tie_encoder=lstm_enc.emb,
+      bias=True
   )
   decoder
   >>>LinearDecoder(
@@ -248,9 +260,9 @@ In this part, we have some structures to build a language model and a text class
   )>
 ```
 
-For the classification data, there are two types of input data: `only text mode` and `text plus mode` as mentioned in the beginning of Usage. Therefore all structures concerning classifier are made in two versions for these two different modes of input data.
+For the classification data, there are two types of input data: `only text mode` and `text plus mode` as mentioned in the Background. Therefore all structures concerning classifier are made in two versions for these two different modes of input data.
 
-* `ulangel.rnn.nn_block.OnlyTextSentenceEncoder`: it is a class similar to `ulangel.rnn.nn_block.AWD_LSTM`, but the difference is when the input text length exceeds the value of bptt (we define to train the language model), it divides the text into servals bptt-length sequences at the input and concatenates the results back to one text at the output.
+* `ulangel.rnn.nn_block.OnlyTextSentenceEncoder`: it is a class similar to `ulangel.rnn.nn_block.AWD_LSTM`, but the difference is when the input text length exceeds the value of bptt (we define to train the language model), it divides the text into serval bptt-length sequences at the input and concatenates the results back to one text at the output.
 ```python
   from ulangel.rnn.nn_block import OnlyTextSentenceEncoder
   sent_enc = OnlyTextSentenceEncoder(lstm_enc, encode_args.bptt)
@@ -420,9 +432,9 @@ Callbacks are triggers during the training. Calling callbacks can make intermedi
 
 * `ulangel.utils.callbacks.OnlyTextCudaCallback`: put the model and the variables on cuda.
 
-* `ulangel.utils.callbacks.TextPlusCudaCallback`: is the textplus version.
+* `ulangel.utils.callbacks.TextPlusCudaCallback`: is the textplus version to put the model and the variables on cuda.
 
-* `ulangel.utils.callbacks.Recorder`: record the loss value and the learning rate of every batch, plot the variation of these two values if the function (recorder.plot_lr() / recorder.plot_loss() / recorder.plot()) is called.
+* `ulangel.utils.callbacks.Recorder`: record the loss value and the learning rate of every batch, plot the variation of these two values if the methode (recorder.plot_lr() / recorder.plot_loss() / recorder.plot()) is called.
 
 * `ulangel.utils.callbacks.LR_Find`: giving the minimum and the maximum of learning rate and the maximum number of iteration, change linearlly the learning rate (from the minimum value to he maximum value) at every batch. Combine with the Recorder, we can see the evaluation of loss so that we can find an appropriate learning rate for the training. Warning: if there is LR_Find in the callback list, the model is running to go through all learning rates, but not to train the model.
 
