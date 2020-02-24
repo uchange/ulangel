@@ -430,17 +430,17 @@ Callbacks are triggers during the training. Calling callbacks can make intermedi
 
 * `ulangel.utils.callbacks.TrainEvalCallback`: setting if the model is in the training mode or in the validation mode. During the training mode, update the progressing and the number of iteration.
 
-* `ulangel.utils.callbacks.OnlyTextCudaCallback`: put the model and the variables on cuda.
+* `ulangel.utils.callbacks.OnlyTextCudaCallback`: putting the model and the variables on cuda.
 
 * `ulangel.utils.callbacks.TextPlusCudaCallback`: is the textplus version to put the model and the variables on cuda.
 
-* `ulangel.utils.callbacks.Recorder`: record the loss value and the learning rate of every batch, plot the variation of these two values if the methode (recorder.plot_lr() / recorder.plot_loss() / recorder.plot()) is called.
+* `ulangel.utils.callbacks.Recorder`: recording the loss value and the learning rate of every batch, plot the variation of these two values if the methode (recorder.plot_lr() / recorder.plot_loss() / recorder.plot()) is called.
 
-* `ulangel.utils.callbacks.LR_Find`: giving the minimum and the maximum of learning rate and the maximum number of iteration, change linearlly the learning rate (from the minimum value to he maximum value) at every batch. Combine with the Recorder, we can see the evaluation of loss so that we can find an appropriate learning rate for the training. Warning: if there is LR_Find in the callback list, the model is running to go through all learning rates, but not to train the model.
+* `ulangel.utils.callbacks.LR_Find`: giving the minimum and the maximum of learning rate and the maximum number of iteration, change linearlly the learning rate (from the minimum value to the maximum value) at every batch. Combine with the Recorder, we can see the evaluation of loss so that we can find an appropriate learning rate for the training. Warning: if there is LR_Find in the callback list, the model is running to go through all learning rates, but not to train the model.
 
-* `ulangel.utils.callbacks.RNNTrainer`: record the prediction result, raw_output (without applying dropouts) and output (after applying dropouts) after every prediction. If needed, it can also add AR or/and TAR regularization to the loss to avoid overfitting.
+* `ulangel.utils.callbacks.RNNTrainer`: recording the prediction result, raw_output (without applying dropouts) and output (after applying dropouts) after every prediction. If needed, it can also add AR or/and TAR regularization to the loss to avoid overfitting.
 
-* `ulangel.utils.callbacks.ParamScheduler`: allow to schedule any hyperparameter during the training, such as learning rate, momentum, weight decay, etc. It takes the hyperparameter's name and its schedule function sched_func. Here we use a combined schedule function combine_scheds, combing two different parts of a cosine function, to have a learning rate low at the beginning and at the end, high in the middle.
+* `ulangel.utils.callbacks.ParamScheduler`: allowing to schedule any hyperparameter during the training, such as learning rate, momentum, weight decay, etc. It takes the hyperparameter's name and its schedule function sched_func. Here we use a combined schedule function combine_scheds, combing two different parts of a cosine function, to have a learning rate low at the beginning and at the end, high in the middle.
 ```python
   from ulangel.utils.callbacks import combine_scheds, ParamScheduler, sched_cos
   lr = 1e-3
@@ -449,11 +449,13 @@ Callbacks are triggers during the training. Calling callbacks can make intermedi
   # pcts means the percentages taken by the following functions in scheds. In the exemple below means the sched combines the first 0.3 of sched_cos1 and the last 0.7 of sched_cos2.
   sched = combine_scheds(pcts=[0.3, 0.7], scheds=[sched_cos1, sched_cos2])
 ```
+ The scheduled learing rate defined above looks like this: ![scheduled learning rate](doc/learning_rate_scheduler.png)
+
 
 For the training process, it's up to the user to choose callbacks to make a callback list. Here it's an exemple:
 ```python
   from ulangel.utils.callbacks import TrainEvalCallback, CudaCallback, Recorder, RNNTrainer
-  cbs = [CudaCallback(), TrainEvalCallback(), Recorder(), RNNTrainer(alpha=2., beta=1.), ParamScheduler('lr', sched)]
+  cbs = [OnlyTextCudaCallback(), TrainEvalCallback(), Recorder(), RNNTrainer(alpha=2., beta=1.), ParamScheduler('lr', sched)]
 ```
 
 
@@ -484,10 +486,7 @@ We can add AvgStatsCallback into the callback list, so that we can know the neur
 
 * stepper: functions defining how to update the parameters or the gradient of the parameters. It depends on the current values. In the library we provide several steppers: `ulangel.utils.optimizer.sgd_step` (stochastic gradient descent stepper), `ulangel.utils.optimizer.weight_decay` (weight decay stepper), `ulangel.utils.optimizer.adam_step` (adam stepper). You can also program your own stepper.
 
-* stateupdater: define how to initialize and update state (for exemple, how to update momentum). In the library we provide some inbuild stateupdaters, all of them inherit the class `ulangel.utils.optimizer.StateUpdater`:
-*   `ulangel.utils.optimizer.AverageGrad`(momentum created by averaging the gradient)
-*   `ulangel.utils.optimizer.AverageSqrGrad`(momentum created by averaging the square of the gradient)
-*   `ulangel.utils.optimizer.StepCount`(step increment)
+* stateupdater: define how to initialize and update state (for exemple, how to update momentum). In the library we provide some inbuild stateupdaters, all of them inherit the class `ulangel.utils.optimizer.StateUpdater`: `ulangel.utils.optimizer.AverageGrad`(momentum created by averaging the gradient), `ulangel.utils.optimizer.AverageSqrGrad`(momentum created by averaging the square of the gradient), `ulangel.utils.optimizer.StepCount`(step increment).
 
 In ulangel, we provide two inbuild optimizer: `ulangel.utils.optimizer.sgd_opt` (stochastic gradient descent optimizer) and `ulangel.utils.optimizer.adam_opt` (adam optimizer). Optimizer is an input of the object of the class leaner. We will show you how to use optimizer in the learner part.
 
@@ -522,7 +521,7 @@ If you want to, you can also write your own stepper, your own stateupdater, to b
 
 
 #### ulangel.utils.learner
-This part includes the class `Learner` and some methods to freeze or unfreeze layers in order to a part of or the whole neural network.
+This part includes the class `Learner` and some methods to freeze or unfreeze layers in order to train just a part of or the whole neural network.
 
 ##### Learner
 * The class `ulangel.utils.learner.Learner`: It is a class that takes the RNN model, data for training, the loss function, the optimizer, the learning rate and callbacks that you need. The method `Learner.fit(epochs=number of epochs that you want to train)` executes all processes in order to train the model. Here is an exemple to build the langage model learner:
