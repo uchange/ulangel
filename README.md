@@ -449,7 +449,8 @@ Callbacks are triggers during the training. Calling callbacks can make intermedi
   # pcts means the percentages taken by the following functions in scheds. In the exemple below means the sched combines the first 0.3 of sched_cos1 and the last 0.7 of sched_cos2.
   sched = combine_scheds(pcts=[0.3, 0.7], scheds=[sched_cos1, sched_cos2])
 ```
- The scheduled learing rate defined above looks like this: ![scheduled learning rate](doc/learning_rate_scheduler.png)
+ The scheduled learing rate defined above looks like this:
+ ![scheduled learning rate](doc/learning_rate_scheduler.png)
 
 
 For the training process, it's up to the user to choose callbacks to make a callback list. Here it's an exemple:
