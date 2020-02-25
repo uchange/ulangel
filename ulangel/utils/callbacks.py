@@ -90,7 +90,7 @@ class TrainEvalCallback(Callback):
         self.run.in_train = False
 
 
-class OnlyTextCudaCallback(Callback):
+class TextOnlyCudaCallback(Callback):
     """Putting model and variables on cuda.
     """
 

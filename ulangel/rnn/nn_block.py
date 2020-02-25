@@ -139,7 +139,7 @@ class SequentialRNN(nn.Sequential):
                 c.reset()
 
 
-class OnlyTextSentenceEncoder(nn.Module):
+class TextOnlySentenceEncoder(nn.Module):
     """The same as the language model encoder, but if the input texts are
     longer than the bptt, it cuts them into bptt in order to be calculated by
     the language model, and then concatenate the results to make still one text
@@ -228,7 +228,7 @@ class TextPlusSentenceEncoder(nn.Module):
         )
 
 
-class OnlyTextPoolingLinearClassifier(nn.Module):
+class TextOnlyPoolingLinearClassifier(nn.Module):
     """Create a linear classifier with pooling. Concatenating the last sequence
     of outputs, the max pooling of outputs, the average pooling of outputs. This
     concatenation is the input of the lineal neuro network classifier.
