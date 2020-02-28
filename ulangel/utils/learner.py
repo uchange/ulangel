@@ -1,5 +1,11 @@
 import torch
-from ulangel.utils.callbacks import listify, CancelTrainException, CancelEpochException, CancelBatchException
+
+from ulangel.utils.callbacks import (
+    CancelBatchException,
+    CancelEpochException,
+    CancelTrainException,
+    listify,
+)
 
 
 class Learner:

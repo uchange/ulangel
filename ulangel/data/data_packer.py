@@ -1,6 +1,6 @@
+import numpy as np
 import torch
 from torch.utils.data import Dataset, Sampler
-import numpy as np
 
 
 class LanguageModelDataset:
@@ -157,7 +157,7 @@ def pad_collate_textonly(samples, pad_idx=1, pad_first=False):
     res = torch.zeros(len(samples), max_len).long() + pad_idx
     for i, s in enumerate(samples):
         if pad_first:
-            res[i, -len(s[0]):] = torch.LongTensor(s[0])
+            res[i, -len(s[0]) :] = torch.LongTensor(s[0])
         else:
             res[i, : len(s[0])] = torch.LongTensor(s[0])
     return res, torch.tensor([s[1] for s in samples])
@@ -172,9 +172,9 @@ def pad_collate_textplus(samples, pad_idx=1, pad_first=False):
         res = [pad_idx] * max_len
         x1, *x2 = s[0]
         if pad_first:
-            res[-len(x1):] = np.array(x1)
+            res[-len(x1) :] = np.array(x1)
         else:
-            res[:len(x1)] = np.array(x1)
+            res[: len(x1)] = np.array(x1)
         xi.append(torch.LongTensor(res))
         xi.append(torch.FloatTensor(x2))
         x.append(xi)

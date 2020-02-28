@@ -1,10 +1,10 @@
-import re
-import torch
-import matplotlib.pyplot as plt
 import math
-from typing import Iterable
+import re
 from functools import partial
+from typing import Iterable
 
+import matplotlib.pyplot as plt
+import torch
 
 _camel_re1 = re.compile("(.)([A-Z][a-z]+)")
 _camel_re2 = re.compile("([a-z0-9])([A-Z])")
@@ -136,21 +136,21 @@ class Recorder(Callback):
 
     def plot_lr(self):
         plt.plot(self.lrs)
-        plt.xlabel('Number of iteration')
-        plt.ylabel('Learning rate')
+        plt.xlabel("Number of iteration")
+        plt.ylabel("Learning rate")
 
     def plot_loss(self):
         plt.plot(self.losses)
-        plt.xlabel('Number of iteration')
-        plt.ylabel('Loss value')
+        plt.xlabel("Number of iteration")
+        plt.ylabel("Loss value")
 
     def plot(self, skip_last=0):
         losses = [o.item() for o in self.losses]
         n = len(losses) - skip_last
         plt.xscale("log")
         plt.plot(self.lrs[:n], losses[:n])
-        plt.xlabel('Learning rate')
-        plt.ylabel('Loss value')
+        plt.xlabel("Learning rate")
+        plt.ylabel("Loss value")
 
 
 class LR_Find(Callback):
@@ -202,7 +202,9 @@ class RNNTrainer(Callback):
         if self.beta != 0.0:
             h = self.raw_out[-1]
             if len(h) > 1:
-                self.run.loss += self.beta * (h[:, 1:] - h[:, :-1]).float().pow(2).mean()
+                self.run.loss += (
+                    self.beta * (h[:, 1:] - h[:, :-1]).float().pow(2).mean()
+                )
 
 
 class ParamScheduler(Callback):

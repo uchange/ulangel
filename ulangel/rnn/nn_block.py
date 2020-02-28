@@ -2,7 +2,12 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
-from ulangel.rnn.dropouts import EmbeddingDropout, ConnectionWeightDropout, ActivationDropout
+
+from ulangel.rnn.dropouts import (
+    ActivationDropout,
+    ConnectionWeightDropout,
+    EmbeddingDropout,
+)
 
 
 class AWD_LSTM(nn.Module):
@@ -172,7 +177,7 @@ class TextOnlySentenceEncoder(nn.Module):
         outputs = []
         masks = []
         for i in range(0, sl, self.bptt):
-            r, o, m = self.module(input[:, i:min(i + self.bptt, sl)])
+            r, o, m = self.module(input[:, i : min(i + self.bptt, sl)])
             masks.append(self.pad_tensor(m, bs, 1))
             raw_outputs.append(r)
             outputs.append(o)
@@ -184,7 +189,6 @@ class TextOnlySentenceEncoder(nn.Module):
 
 
 class TextPlusSentenceEncoder(nn.Module):
-
     def __init__(self, module, bptt, pad_idx=1):
         super().__init__()
         self.bptt = bptt
@@ -194,12 +198,13 @@ class TextPlusSentenceEncoder(nn.Module):
     def concat(self, arrs, bs):
         return [
             torch.cat([self.pad_tensor(l[si], bs) for l in arrs], dim=1)
-            for si in range(len(arrs[0]))]
+            for si in range(len(arrs[0]))
+        ]
 
-    def pad_tensor(self, t, bs, val=0.):
+    def pad_tensor(self, t, bs, val=0.0):
         "for a batch which size is smaller than a batchsize, fill in with zeros to make it a batchsize"
         if t.size(0) < bs:
-            return torch.cat([t, val + t.new_zeros(bs-t.size(0), *t.shape[1:])])
+            return torch.cat([t, val + t.new_zeros(bs - t.size(0), *t.shape[1:])])
         return t
 
     def forward(self, input):
@@ -215,7 +220,7 @@ class TextPlusSentenceEncoder(nn.Module):
         outputs = []
         masks = []
         for i in range(0, sl, self.bptt):
-            ids_input_i = ids_input[:, i: min(i+self.bptt, sl)]
+            ids_input_i = ids_input[:, i : min(i + self.bptt, sl)]
             r, o, m = self.module(ids_input_i)
             masks.append(self.pad_tensor(m, bs, 1))
             raw_outputs.append(r)
@@ -224,7 +229,7 @@ class TextPlusSentenceEncoder(nn.Module):
             self.concat(raw_outputs, bs),
             self.concat(outputs, bs),
             torch.cat(masks, dim=1),
-            kw_ls
+            kw_ls,
         )
 
 
@@ -289,16 +294,17 @@ class TextPlusPoolingLinearClassifier(nn.Module):
         lengths = output.size(1) - mask.long().sum(dim=1)
         avg_pool = output.masked_fill(mask[:, :, None], 0).sum(dim=1)
         avg_pool.div_(lengths.type(avg_pool.dtype)[:, None])
-        max_pool = output.masked_fill(mask[:, :, None], -float('inf')).max(dim=1)[0]
+        max_pool = output.masked_fill(mask[:, :, None], -float("inf")).max(dim=1)[0]
         x1 = torch.cat(
-            [output[torch.arange(0, output.size(0)), lengths-1], max_pool, avg_pool],
-            1)  # Concat pooling.
+            [output[torch.arange(0, output.size(0)), lengths - 1], max_pool, avg_pool],
+            1,
+        )  # Concat pooling.
         first_clas = self.layers1(x1)
         x2 = torch.cat([first_clas, kw_ls], 1)
         x = self.layers2(x2)
         return x
 
-    def bn_drop_lin(self, n_in, n_out, bn=True, p=0., actn=None):
+    def bn_drop_lin(self, n_in, n_out, bn=True, p=0.0, actn=None):
         layers = [nn.BatchNorm1d(n_in)] if bn else []
         if p != 0:
             layers.append(nn.Dropout(p))

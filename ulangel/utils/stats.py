@@ -1,5 +1,6 @@
 import torch
 import torch.nn.functional as F
+
 from ulangel.utils.callbacks import Callback, listify
 
 
@@ -11,6 +12,7 @@ class AvgStats:
     statistics after running a batch and to update the count value. It can also
     print average statistics depending on the training or validation state.
     """
+
     def __init__(self, metrics, in_train):
         self.metrics = listify(metrics)
         self.in_train = in_train
@@ -48,6 +50,7 @@ class AvgStatsCallback(Callback):
     """Calculating all statistics after every batch and print all
     statitics after every epoch.
     """
+
     def __init__(self, metrics):
 
         self.train_stats = AvgStats(metrics, True)

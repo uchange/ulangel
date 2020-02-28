@@ -1,6 +1,7 @@
-import re
-import emoji
 import html
+import re
+
+import emoji
 
 UNK = "xxunk"
 PAD = "xxpad"
@@ -10,8 +11,8 @@ TK_REP = "xxrep"
 TK_WREP = "xxwrep"
 TK_UP = "xxup"
 TK_MAJ = "xxmaj"
-BOS = 'xbos'  # beginning-of-sentence tag
-FLD = 'xfld'
+BOS = "xbos"  # beginning-of-sentence tag
+FLD = "xfld"
 
 
 def toLowercase(matchobj):
@@ -19,32 +20,43 @@ def toLowercase(matchobj):
 
 
 def lower_tw(tweet):
-    tweet_with_lower_tw = re.sub(r'(@\S+){1}', toLowercase, tweet)
+    tweet_with_lower_tw = re.sub(r"(@\S+){1}", toLowercase, tweet)
     return tweet_with_lower_tw
 
 
 def fixup(x):
-    re1 = re.compile(r'  +')
-    x = x.replace('#39;', "'").replace('&amp;', '&').replace(
-        '#146;', "'").replace('nbsp;', ' ').replace('#36;', '$').replace(
-        '\\n', "\n").replace('quot;', "'").replace('<br />', "\n").replace(
-        '\\"', '"').replace('<unk>', 'u_n').replace(' @.@ ', '.').replace(
-        ' @-@ ', '-').replace('\\', ' \\ ').replace('\xa0', '')
-    x = re.sub(r'[h][t][t][p]\S+', '', x)
+    re1 = re.compile(r"  +")
+    x = (
+        x.replace("#39;", "'")
+        .replace("&amp;", "&")
+        .replace("#146;", "'")
+        .replace("nbsp;", " ")
+        .replace("#36;", "$")
+        .replace("\\n", "\n")
+        .replace("quot;", "'")
+        .replace("<br />", "\n")
+        .replace('\\"', '"')
+        .replace("<unk>", "u_n")
+        .replace(" @.@ ", ".")
+        .replace(" @-@ ", "-")
+        .replace("\\", " \\ ")
+        .replace("\xa0", "")
+    )
+    x = re.sub(r"[h][t][t][p]\S+", "", x)
     x = emoji.demojize(x)
-    return re1.sub(' ', html.unescape(x))
+    return re1.sub(" ", html.unescape(x))
 
 
 def spec_add_spaces(x):
     "Add spaces around / and #"
-    x = re.sub(r'([/#@])', r' \1 ', x)
-    x = re.sub(r'([:][\S]+[:])', r' \1 ', x.replace('::', ': :'))
+    x = re.sub(r"([/#@])", r" \1 ", x)
+    x = re.sub(r"([:][\S]+[:])", r" \1 ", x.replace("::", ": :"))
     return x
 
 
 def rm_useless_spaces(x):
     "Remove multiple spaces"
-    return re.sub(' {2,}', ' ', x)
+    return re.sub(" {2,}", " ", x)
 
 
 def replace_all_caps(x):
@@ -63,7 +75,7 @@ def deal_caps(x):
     "Replace all Capitalized tokens in by their lower version and add `TK_MAJ` ahead."
     res = []
     for t in x:
-        if t == '':
+        if t == "":
             continue
         if t[0].isupper() and len(t) > 1 and t[1:].islower():
             res.append(TK_MAJ)
@@ -73,19 +85,23 @@ def deal_caps(x):
 
 def replace_rep(x):
     "Replace repetitions at the character level: cccc -> TK_REP 4 c"
+
     def _replace_rep(m):
         c, cc = m.groups()
-        return f' {TK_REP} {len(cc)+1} {c} '
-    re_rep = re.compile(r'(\S)(\1{3,})')
+        return f" {TK_REP} {len(cc)+1} {c} "
+
+    re_rep = re.compile(r"(\S)(\1{3,})")
     return re_rep.sub(_replace_rep, x)
 
 
 def replace_wrep(x):
     "Replace word repetitions: word word word -> TK_WREP 3 word"
+
     def _replace_wrep(m):
         c, cc = m.groups()
-        return f' {TK_WREP} {len(cc.split())+1} {c} '
-    re_wrep = re.compile(r'(\b\w+\W+)(\1{3,})')
+        return f" {TK_WREP} {len(cc.split())+1} {c} "
+
+    re_wrep = re.compile(r"(\b\w+\W+)(\1{3,})")
     return re_wrep.sub(_replace_wrep, x)
 
 
