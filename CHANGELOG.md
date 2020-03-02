@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+### v0.1.1
+* Updated all requirements to the most recent version.
+
 ### v0.1.0
 * Added `ulangel.data.text_processor` to clean the text.
 * Added `freeze_all`, `unfreeze_all`, `freeze_upto` in `ulangel.utils.learner` to be able to freeze or unfreeze a certain number of layers in a neural network.
