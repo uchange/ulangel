@@ -1,5 +1,11 @@
 import torch
-from ulangel.utils.callbacks import listify, CancelTrainException, CancelEpochException, CancelBatchException
+
+from ulangel.utils.callbacks import (
+    CancelBatchException,
+    CancelEpochException,
+    CancelTrainException,
+    listify,
+)
 
 
 class Learner:
@@ -42,7 +48,7 @@ class Learner:
     def one_batch(self, i, xb, yb):
         try:
             self.iter = i
-            self.xb = xb.clone().detach().to(torch.int64)
+            self.xb = xb
             self.yb = yb
 
             # I added to debug from our data
@@ -133,3 +139,26 @@ class Learner:
         for cb in sorted(self.cbs, key=lambda x: x._order):
             res = cb(cb_name) and res
         return res
+
+
+def freeze_all(model_all_layers):
+    for layer in model_all_layers:
+        for operation in layer:
+            for param in operation.parameters():
+                param.requires_grad = False
+
+
+def unfreeze_all(model_all_layers):
+    for layer in model_all_layers:
+        for operation in layer:
+            for param in operation.parameters():
+                param.requires_grad = True
+
+
+def freeze_upto(model_all_layers, nb_layer):
+    freeze_all(model_all_layers)
+    unfreeze_layers = model_all_layers[nb_layer:]
+    for layer in unfreeze_layers:
+        for operation in layer:
+            for param in operation.parameters():
+                param.requires_grad = True

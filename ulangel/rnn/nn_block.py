@@ -2,7 +2,12 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
-from ulangel.rnn.dropouts import EmbeddingDropout, ConnectionWeightDropout, ActivationDropout
+
+from ulangel.rnn.dropouts import (
+    ActivationDropout,
+    ConnectionWeightDropout,
+    EmbeddingDropout,
+)
 
 
 class AWD_LSTM(nn.Module):
@@ -51,6 +56,7 @@ class AWD_LSTM(nn.Module):
         )
 
     def forward(self, input):
+        input = input.long()
         bs, sl = input.size()
         if bs != self.bs:
             self.bs = bs
@@ -138,7 +144,7 @@ class SequentialRNN(nn.Sequential):
                 c.reset()
 
 
-class SentenceEncoder(nn.Module):
+class TextOnlySentenceEncoder(nn.Module):
     """The same as the language model encoder, but if the input texts are
     longer than the bptt, it cuts them into bptt in order to be calculated by
     the language model, and then concatenate the results to make still one text
@@ -164,6 +170,7 @@ class SentenceEncoder(nn.Module):
         return t
 
     def forward(self, input):
+        input = input.long()
         bs, sl = input.size()
         self.module.reset()
         raw_outputs = []
@@ -181,7 +188,52 @@ class SentenceEncoder(nn.Module):
         )
 
 
-class PoolingLinearClassifier(nn.Module):
+class TextPlusSentenceEncoder(nn.Module):
+    def __init__(self, module, bptt, pad_idx=1):
+        super().__init__()
+        self.bptt = bptt
+        self.module = module
+        self.pad_idx = pad_idx
+
+    def concat(self, arrs, bs):
+        return [
+            torch.cat([self.pad_tensor(l[si], bs) for l in arrs], dim=1)
+            for si in range(len(arrs[0]))
+        ]
+
+    def pad_tensor(self, t, bs, val=0.0):
+        "for a batch which size is smaller than a batchsize, fill in with zeros to make it a batchsize"
+        if t.size(0) < bs:
+            return torch.cat([t, val + t.new_zeros(bs - t.size(0), *t.shape[1:])])
+        return t
+
+    def forward(self, input):
+        if len(input) != 2:
+            ids_input, kw_ls = list(zip(*input))
+            ids_input = torch.stack(ids_input)
+            kw_ls = torch.stack(kw_ls)
+        else:
+            ids_input, kw_ls = input
+        bs, sl = ids_input.size()
+        self.module.reset()
+        raw_outputs = []
+        outputs = []
+        masks = []
+        for i in range(0, sl, self.bptt):
+            ids_input_i = ids_input[:, i : min(i + self.bptt, sl)]
+            r, o, m = self.module(ids_input_i)
+            masks.append(self.pad_tensor(m, bs, 1))
+            raw_outputs.append(r)
+            outputs.append(o)
+        return (
+            self.concat(raw_outputs, bs),
+            self.concat(outputs, bs),
+            torch.cat(masks, dim=1),
+            kw_ls,
+        )
+
+
+class TextOnlyPoolingLinearClassifier(nn.Module):
     """Create a linear classifier with pooling. Concatenating the last sequence
     of outputs, the max pooling of outputs, the average pooling of outputs. This
     concatenation is the input of the lineal neuro network classifier.
@@ -207,6 +259,49 @@ class PoolingLinearClassifier(nn.Module):
             1,
         )  # Concat pooling.
         x = self.layers(x)
+        return x
+
+    def bn_drop_lin(self, n_in, n_out, bn=True, p=0.0, actn=None):
+        layers = [nn.BatchNorm1d(n_in)] if bn else []
+        if p != 0:
+            layers.append(nn.Dropout(p))
+        layers.append(nn.Linear(n_in, n_out))
+        if actn is not None:
+            layers.append(actn)
+        return layers
+
+
+class TextPlusPoolingLinearClassifier(nn.Module):
+    "Create a linear classifier with pooling."
+
+    def __init__(self, layers1, drops1, layers2, drops2):
+        super().__init__()
+        mod_layers1 = []
+        activs1 = [nn.ReLU(inplace=True)] * (len(layers1) - 1)
+        for n_in, n_out, p, actn in zip(layers1[:-1], layers1[1:], drops1, activs1):
+            mod_layers1 += self.bn_drop_lin(n_in, n_out, p=p, actn=actn)
+        self.layers1 = nn.Sequential(*mod_layers1)
+
+        mod_layers2 = []
+        activs2 = [nn.ReLU(inplace=True)] * (len(layers2) - 1)
+        for n_in, n_out, p, actn in zip(layers2[:-1], layers2[1:], drops2, activs2):
+            mod_layers2 += self.bn_drop_lin(n_in, n_out, p=p, actn=actn)
+        self.layers2 = nn.Sequential(*mod_layers2)
+
+    def forward(self, input):
+        raw_outputs, outputs, mask, kw_ls = input
+        output = outputs[-1]
+        lengths = output.size(1) - mask.long().sum(dim=1)
+        avg_pool = output.masked_fill(mask[:, :, None], 0).sum(dim=1)
+        avg_pool.div_(lengths.type(avg_pool.dtype)[:, None])
+        max_pool = output.masked_fill(mask[:, :, None], -float("inf")).max(dim=1)[0]
+        x1 = torch.cat(
+            [output[torch.arange(0, output.size(0)), lengths - 1], max_pool, avg_pool],
+            1,
+        )  # Concat pooling.
+        first_clas = self.layers1(x1)
+        x2 = torch.cat([first_clas, kw_ls], 1)
+        x = self.layers2(x2)
         return x
 
     def bn_drop_lin(self, n_in, n_out, bn=True, p=0.0, actn=None):

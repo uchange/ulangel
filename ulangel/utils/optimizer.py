@@ -1,5 +1,7 @@
 from functools import partial
+
 import torch
+
 from ulangel.utils.callbacks import listify
 
 
@@ -98,6 +100,7 @@ class Optimizer:
 
 class StatefulOptimizer(Optimizer):
     "optimizer with states, which record the history parameter updates"
+
     def __init__(self, params, steppers, stateupdaters=None, **defaults):
         self.stateupdaters = listify(stateupdaters)
         maybe_update(self.stateupdaters, defaults, get_defaults)
@@ -110,7 +113,9 @@ class StatefulOptimizer(Optimizer):
                 # Create a state for p and call all the statistics to initialize it.
                 self.state[p] = {}
                 # apply all initialization of self.stateupdaters on p and add the results into self.state[p]
-                maybe_update(self.stateupdaters, self.state[p], lambda o: o.init_state(p))
+                maybe_update(
+                    self.stateupdaters, self.state[p], lambda o: o.init_state(p)
+                )
             state = self.state[p]
             for stateupdater in self.stateupdaters:
                 state = stateupdater.update(p, state, **hyper)

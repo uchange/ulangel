@@ -1,6 +1,7 @@
+import warnings
+
 import torch.nn as nn
 import torch.nn.functional as F
-import warnings
 
 
 def dropout_mask(x, sz, p):
